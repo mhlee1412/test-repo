@@ -29,6 +29,8 @@
 2022 상반기  (https://happip-jh.tistory.com/7)
 1) pandas 혹은 python을 다룰 수 있는지 보는 문제
   - dataframe을 주고, 그 data를 정리해서 하나의 column으로 값을 내는 문제
+   => 문자열을 분리해 여려개의 컬럼으로 만들거나 합쳐서 하나의 컬럼으로 만들기 : https://suy379.tistory.com/126 
+   => piviot / melt: https://suy379.tistory.com/125
 2) 데이터 분석 문제
   - 임의의 사람의 신용 점수 같은 데이터가 주어지고, 이를 분석해서 최고의 성능을 내는 모델 만들기
   - 20개의 feature들 중에서 PCA와 같은 방법을 사용해 feature을 뽑고 random forest, decision tree 등 모델을 활용해 코드를 작성하여 제출
@@ -78,6 +80,8 @@
 데이터 : 비공개
 문제 : 각 group별로 어떤 score가 가장 높은지 추출해서 dataframe으로 변환하시오
 (group이 순서형임을 고려해야함)
+모범답안 : 
+
 3) 
 유형 : 데이터 전처리 후 모델 적용 (데이터 선택, 가공, 인코딩, 모델 적용, 평가) 
 사용한 데이터 : (비공개, 인터넷 공유하면 안된다고 하네요. 정말 궁금하신 분들은 연락주세요!)
@@ -87,3 +91,6 @@ train_test_split 함수 호출해서 테스트 데이터 분할
 LinerRegression 모델 학습
 RMSE 계산
 다만, 모든 프로세스 직접구축이 아닌, 프로세스 내 구멍난 코드 블록 채우는 형식
+
+면접
+https://davidlds.tistory.com/92
