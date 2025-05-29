@@ -1,0 +1,80 @@
+# 필요한 라이브러리 설치
+!pip install transformers torch biopython -q
+
+# 라이브러리 임포트
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer, TrainingArguments
+from torch.utils.data import Dataset
+import numpy as np
+from Bio import SeqIO
+
+# 1. 데이터 준비 (샘플 데이터 생성)
+class GeneDataset(Dataset):
+    def __init__(self, sequences, labels, tokenizer, max_length=128):
+        self.sequences = [f"DNA sequence: {seq}" for seq in sequences]  # 서열을 텍스트로 변환
+        self.labels = labels
+        self.tokenizer = tokenizer
+        self.max_length = max_length
+
+    def __len__(self):
+        return len(self.sequences)
+
+    def __getitem__(self, idx):
+        encoding = self.tokenizer(self.sequences[idx], truncation=True, padding='max_length', max_length=self.max_length, return_tensors='pt')
+        return {
+            'input_ids': encoding['input_ids'].flatten(),
+            'attention_mask': encoding['attention_mask'].flatten(),
+            'labels': torch.tensor(self.labels[idx], dtype=torch.long)
+        }
+
+# 샘플 데이터 (실제로는 GenBank에서 수집)
+sequences = ["ATGCCCGAG", "GCTAGCTAG", "ATGGCTAGC"]  # DNA 서열 예시
+labels = [0, 1, 0]  # 0: 효소, 1: 막 단백질 (임의 설정)
+
+# 2. 모델 및 토크나이저 로드
+model_name = "dmis-lab/biobert-base-cased-v1.1"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=2)  # 2개 클래스
+
+# 3. 데이터셋 생성
+dataset = GeneDataset(sequences, labels, tokenizer)
+train_size = int(0.8 * len(dataset))
+train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, len(dataset) - train_size])
+
+# 4. 학습 설정
+training_args = TrainingArguments(
+    output_dir='./results',
+    num_train_epochs=3,
+    per_device_train_batch_size=8,
+    per_device_eval_batch_size=8,
+    warmup_steps=50,
+    weight_decay=0.01,
+    logging_dir='./logs',
+    evaluation_strategy="epoch",
+    save_strategy="epoch",
+    load_best_model_at_end=True,
+)
+
+trainer = Trainer(
+    model=model,
+    args=training_args,
+    train_dataset=train_dataset,
+    eval_dataset=val_dataset,
+)
+
+# 5. 모델 학습
+trainer.train()
+
+# 6. 예측 함수
+def predict_sequence(sequence):
+    inputs = tokenizer(f"DNA sequence: {sequence}", return_tensors="pt", truncation=True, padding=True, max_length=128)
+    outputs = model(**inputs)
+    predictions = torch.nn.functional.softmax(outputs.logits, dim=-1)
+    predicted_class = np.argmax(predictions.detach().numpy())
+    annotation = "이 서열은 효소 기능을 가짐" if predicted_class == 0 else "이 서열은 막 단백질 기능을 가짐"
+    return annotation
+
+# 7. 테스트
+test_sequence = "ATGCCCGAG"
+annotation = predict_sequence(test_sequence)
+print(f"서열: {test_sequence}")
+print(f"주석: {annotation}")
